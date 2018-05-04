@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+import glob
+import json
+import os
+import re
+import urlparse
+
+print("Content-Type: text/plain")
+print("")
+
+sensors = {}
+
+w1_slaves = glob.glob('/sys/bus/w1/devices/*/w1_slave')
+
+for slave in w1_slaves:
+    with open(slave, 'r') as s:
+        data = s.readlines()
+
+    serial = os.path.split(os.path.dirname(slave))[-1]
+
+    if re.match('.*crc=.*YES', data[0]):
+        temp_reading = int(re.match('.*t=(\d+)', data[1]).groups()[0])
+        sensors[serial] = temp_reading/1000.0
+    else:
+        sensors[serial] = 'N/A'
+
+#print(os.environ.get('REQUEST_METHOD', 'default'))
+#print(urlparse.parse_qs(os.environ.get('QUERY_STRING', ''), keep_blank_values=True))
+#
+
+print(json.dumps(sensors, sort_keys=True, indent=2))
